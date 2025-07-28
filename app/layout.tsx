@@ -1,6 +1,6 @@
 import './globals.css'
 import { PostHogProvider, ThemeProvider } from './providers'
-import { Toaster } from '@/components/ui/toaster'
+import { Toaster } from '@/modules/shared/components/ui/toaster'
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'

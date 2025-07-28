@@ -1,5 +1,5 @@
-import { FragmentSchema } from '@/lib/schema'
-import { ExecutionResultInterpreter, ExecutionResultWeb } from '@/lib/types'
+import { FragmentSchema } from '@/modules/shared/lib/schema'
+import { ExecutionResultInterpreter, ExecutionResultWeb } from '@/modules/shared/lib/types'
 import { Sandbox } from '@e2b/code-interpreter'
 
 const sandboxTimeout = 10 * 60 * 1000 // 10 minute in ms

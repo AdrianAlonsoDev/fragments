@@ -1,12 +1,12 @@
-import { Duration } from '@/lib/duration'
-import { getModelClient } from '@/lib/models'
-import { LLMModel, LLMModelConfig } from '@/lib/models'
-import { toPrompt } from '@/lib/prompt'
-import ratelimit from '@/lib/ratelimit'
-import { fragmentSchema as schema } from '@/lib/schema'
-import { Templates } from '@/lib/templates'
+import { Duration } from '@/modules/shared/lib/duration'
+import { getModelClient } from '@/modules/ai/lib/models'
+import { LLMModel, LLMModelConfig } from '@/modules/ai/lib/models'
+import { toPrompt } from '@/modules/chat/lib/prompt'
+import ratelimit from '@/infrastructure/api/ratelimit'
+import { fragmentSchema as schema } from '@/modules/shared/lib/schema'
+import { Templates } from '@/modules/templates/lib/templates'
 import { streamObject, LanguageModel, CoreMessage } from 'ai'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/infrastructure/supabase/supabase'
 
 export const maxDuration = 60
 

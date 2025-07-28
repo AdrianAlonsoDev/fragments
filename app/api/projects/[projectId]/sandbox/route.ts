@@ -1,8 +1,8 @@
-import { FragmentSchema } from '@/lib/schema'
-import { ExecutionResultInterpreter, ExecutionResultWeb } from '@/lib/types'
-import { SandboxManager } from '@/lib/sandbox-manager'
-import { supabase } from '@/lib/supabase'
-import { createAuthenticatedClient } from '@/lib/supabase-auth'
+import { FragmentSchema } from '@/modules/shared/lib/schema'
+import { ExecutionResultInterpreter, ExecutionResultWeb } from '@/modules/shared/lib/types'
+import { SandboxManager } from '@/modules/sandbox/lib/sandbox-manager'
+import { supabase } from '@/infrastructure/supabase/supabase'
+import { createAuthenticatedClient } from '@/infrastructure/supabase/supabase-auth'
 
 export const maxDuration = 60
 

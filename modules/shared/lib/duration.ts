@@ -1,6 +1,6 @@
 // Taken from https://github.com/upstash/ratelimit/blob/main/src/duration.ts
 
-type Unit = 'ms' | 's' | 'm' | 'h' | 'd'
+import { Unit } from '@/modules/shared/types'
 export type Duration = `${number} ${Unit}` | `${number}${Unit}`
 
 /**

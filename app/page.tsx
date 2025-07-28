@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useLocalStorage } from 'usehooks-ts'
 import { usePostHog } from 'posthog-js/react'
-import { ViewType } from '@/modules/auth/components/auth'
+import { ViewType } from '@/modules/auth/types'
 import { AuthDialog } from '@/modules/auth/components/auth-dialog'
 import { useAuth } from '@/modules/auth/lib/auth'
 import { useProject, useProjects } from '@/modules/projects/hooks/useProject'

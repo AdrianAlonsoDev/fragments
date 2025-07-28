@@ -1,15 +1,8 @@
 import { supabase } from '@/infrastructure/supabase/supabase'
-import { ViewType } from '@/modules/auth/components/auth'
+import { ViewType, UserTeam } from '@/modules/auth/types'
 import { Session } from '@supabase/supabase-js'
 import { usePostHog } from 'posthog-js/react'
 import { useState, useEffect } from 'react'
-
-type UserTeam = {
-  email: string
-  id: string
-  name: string
-  tier: string
-}
 
 export async function getUserTeam(
   session: Session,

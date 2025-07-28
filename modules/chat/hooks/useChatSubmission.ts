@@ -1,19 +1,10 @@
 import { useCallback, useState, useEffect } from 'react'
 import { experimental_useObject as useObject } from 'ai/react'
 import { usePostHog } from 'posthog-js/react'
-import { FragmentSchema, fragmentSchema as schema } from '@/modules/shared/lib/schema'
+import { fragmentSchema as schema } from '@/modules/shared/lib/schema'
 import { Message, toAISDKMessages, toMessageImage } from '@/modules/chat/types/messages'
 import { LLMModel, LLMModelConfig } from '@/modules/ai/lib/models'
-import { Templates, TemplateId } from '@/modules/templates/lib/templates'
-import { DeepPartial } from 'ai'
-import { Session } from '@supabase/supabase-js'
-
-interface UseChatSubmissionProps {
-  currentProjectId: string | null
-  session: Session | null
-  userTeam: { id: string; name: string; tier: string } | undefined
-  onFragmentGenerated?: (fragment: DeepPartial<FragmentSchema>) => Promise<void>
-}
+import { UseChatSubmissionProps, TemplateConfig } from '@/modules/chat/types'
 
 export function useChatSubmission({
   currentProjectId,
@@ -59,7 +50,7 @@ export function useChatSubmission({
     chatInput: string,
     files: File[],
     messages: Message[],
-    currentTemplate: Templates | { [key: string]: any },
+    currentTemplate: TemplateConfig,
     currentModel: LLMModel,
     languageModel: LLMModelConfig,
     selectedTemplate: string | 'auto'
@@ -99,7 +90,7 @@ export function useChatSubmission({
 
   const retry = useCallback((
     messages: Message[],
-    currentTemplate: Templates | { [key: string]: any },
+    currentTemplate: TemplateConfig,
     currentModel: LLMModel,
     languageModel: LLMModelConfig
   ) => {

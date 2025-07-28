@@ -1,3 +1,8 @@
+import { DeepPartial } from 'ai'
+import { FragmentSchema } from '@/modules/shared/lib/schema'
+import { ExecutionResult } from '@/modules/shared/lib/types'
+import { MessageContent } from '@/modules/chat/types'
+
 export interface Project {
   id: string
   team_id: string
@@ -14,8 +19,8 @@ export interface ProjectMessage {
   id: string
   project_id: string
   role: 'user' | 'assistant' | 'system'
-  content: any
-  fragment?: any
-  result?: any
+  content: MessageContent
+  fragment?: DeepPartial<FragmentSchema>
+  result?: ExecutionResult
   created_at: Date
 }

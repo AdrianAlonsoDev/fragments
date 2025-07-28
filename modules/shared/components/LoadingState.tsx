@@ -1,6 +1,4 @@
-interface LoadingStateProps {
-  message?: string
-}
+import { LoadingStateProps } from '@/modules/shared/types'
 
 export function LoadingState({ message = 'Loading...' }: LoadingStateProps) {
   return (

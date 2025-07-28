@@ -3,11 +3,7 @@ import { Message } from '@/modules/chat/types/messages'
 import { FragmentSchema } from '@/modules/shared/lib/schema'
 import { ExecutionResult } from '@/modules/shared/lib/types'
 import { DeepPartial } from 'ai'
-import { ProjectMessage } from '@/modules/projects/types/project-types'
-
-interface UseChatStateProps {
-  projectMessages: ProjectMessage[]
-}
+import { UseChatStateProps } from '@/modules/chat/types'
 
 export function useChatState({ projectMessages }: UseChatStateProps) {
   const [messages, setMessages] = useState<Message[]>([])

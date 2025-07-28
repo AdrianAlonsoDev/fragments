@@ -3,13 +3,14 @@ import { ProjectSelector } from './project-selector'
 import { Project } from '@/modules/projects/types/project-types'
 import { Session } from '@supabase/supabase-js'
 import { SupabaseClient } from '@supabase/supabase-js'
+import { ProjectCreateData } from '@/modules/projects/types'
 
 interface ProjectEmptyStateProps {
   session: Session | null
   userTeam: { id: string; name: string; tier: string } | undefined
   projects: Project[]
   onProjectSelect: (project: Project) => void
-  onProjectCreate: (data: any) => Promise<void>
+  onProjectCreate: (data: ProjectCreateData) => Promise<void>
   onProjectDelete: (id: string) => Promise<void>
   onShowLogin: () => void
   supabase: SupabaseClient | null | undefined

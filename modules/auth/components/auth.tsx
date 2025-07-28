@@ -4,7 +4,7 @@ import { Input } from '@/modules/shared/components/ui/input'
 import { Label } from '@/modules/shared/components/ui/label'
 import { Separator } from '@/modules/shared/components/ui/separator'
 import { cn } from '@/modules/shared/lib/utils'
-import { Provider, SupabaseClient } from '@supabase/supabase-js'
+import { Provider } from '@supabase/supabase-js'
 import {
   AlertCircle,
   CheckCircle2,
@@ -14,69 +14,16 @@ import {
 } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
 import * as SimpleIcons from 'simple-icons'
-
-const VIEWS = {
-  SIGN_IN: 'sign_in',
-  SIGN_UP: 'sign_up',
-  FORGOTTEN_PASSWORD: 'forgotten_password',
-  MAGIC_LINK: 'magic_link',
-  UPDATE_PASSWORD: 'update_password',
-} as const
-
-export type ViewType = (typeof VIEWS)[keyof typeof VIEWS]
-
-type RedirectTo = undefined | string
-
-export interface AuthProps {
-  supabaseClient: SupabaseClient
-  socialLayout?: 'horizontal' | 'vertical'
-  providers?: Provider[]
-  view?: ViewType
-  redirectTo?: RedirectTo
-  onlyThirdPartyProviders?: boolean
-  magicLink?: boolean
-  onSignUpValidate?: (email: string, password: string) => Promise<boolean>
-  metadata?: Record<string, any>
-}
-
-interface SubComponentProps {
-  supabaseClient: SupabaseClient
-  setAuthView: (view: ViewType) => void
-  setLoading: (loading: boolean) => void
-  setError: (error: string | null) => void
-  setMessage: (message: string | null) => void
-  clearMessages: () => void
-  loading: boolean
-  redirectTo?: RedirectTo
-}
-
-interface SocialAuthProps {
-  supabaseClient: SupabaseClient
-  providers: Provider[]
-  layout?: 'horizontal' | 'vertical'
-  redirectTo?: RedirectTo
-  setLoading: (loading: boolean) => void
-  setError: (error: string) => void
-  clearMessages: () => void
-  loading: boolean
-}
-
-interface EmailAuthProps extends SubComponentProps {
-  view: typeof VIEWS.SIGN_IN | typeof VIEWS.SIGN_UP
-  magicLink?: boolean
-  onSignUpValidate?: (email: string, password: string) => Promise<boolean>
-  metadata?: Record<string, any>
-}
-
-interface UseAuthFormReturn {
-  loading: boolean
-  error: string | null
-  message: string | null
-  setLoading: (loading: boolean) => void
-  setError: (error: string | null) => void
-  setMessage: (message: string | null) => void
-  clearMessages: () => void
-}
+import {
+  VIEWS,
+  ViewType,
+  AuthProps,
+  SubComponentProps,
+  SocialAuthProps,
+  EmailAuthProps,
+  UseAuthFormReturn,
+  AuthError
+} from '@/modules/auth/types'
 
 const ProviderIcons: {
   [key in Provider]?: React.ComponentType<{ className?: string }>
@@ -208,8 +155,9 @@ function SignInForm({
         password,
       })
       if (error) throw error
-    } catch (error: any) {
-      setError(error.message || 'An unexpected error occurred.')
+    } catch (error) {
+      const authError = error as AuthError
+      setError(authError.message || 'An unexpected error occurred.')
     } finally {
       setLoading(false)
     }
@@ -320,9 +268,10 @@ function SignUpForm({
       if (data.user && !data.session) {
         setMessage('Check your email for the confirmation link.')
       }
-    } catch (error: any) {
-      console.error('[DEBUG] Signup error details:', error)
-      setError(error.message || 'An unexpected error occurred.')
+    } catch (error) {
+      const authError = error as AuthError
+      console.error('[DEBUG] Signup error details:', authError)
+      setError(authError.message || 'An unexpected error occurred.')
     } finally {
       setLoading(false)
     }

@@ -1,4 +1,5 @@
-import Auth, { ViewType } from './auth'
+import Auth from './auth'
+import { ViewType } from '@/modules/auth/types'
 import Logo from '@/modules/shared/components/logo'
 import { validateEmail } from '@/app/actions/validate-email'
 import {

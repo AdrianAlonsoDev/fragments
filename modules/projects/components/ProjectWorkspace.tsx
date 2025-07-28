@@ -15,6 +15,7 @@ import { Session } from '@supabase/supabase-js'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { DeepPartial } from 'ai'
 import { Dispatch, SetStateAction } from 'react'
+import { ProjectCreateData } from '@/modules/projects/types'
 
 interface ProjectWorkspaceProps {
   // Auth
@@ -27,7 +28,7 @@ interface ProjectWorkspaceProps {
   projects: Project[]
   currentProject: Project | null
   onProjectSelect: (project: Project) => void
-  onProjectCreate: (data: any) => Promise<void>
+  onProjectCreate: (data: ProjectCreateData) => Promise<void>
   onProjectDelete: (id: string) => Promise<void>
   
   // Chat state
@@ -50,7 +51,7 @@ interface ProjectWorkspaceProps {
   // Chat submission
   isLoading: boolean
   isPreviewLoading: boolean
-  error: any
+  error: Error | null
   errorMessage: string
   isRateLimited: boolean
   onRetry: () => void

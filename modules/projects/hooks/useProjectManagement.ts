@@ -3,13 +3,7 @@ import { useLocalStorage } from 'usehooks-ts'
 import { Project } from '@/modules/projects/types/project-types'
 import { TemplateId } from '@/modules/templates/lib/templates'
 import { SandboxManager } from '@/modules/sandbox/lib/sandbox-manager'
-
-interface UseProjectManagementProps {
-  projects: Project[]
-  createProject: (data: any) => Promise<{ data: Project | null; error: any }>
-  deleteProject: (id: string) => Promise<{ error: any }>
-  onStateReset?: () => void
-}
+import { UseProjectManagementProps, ProjectCreateData, SupabaseError } from '@/modules/projects/types'
 
 export function useProjectManagement({
   projects,

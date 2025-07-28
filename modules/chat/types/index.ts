@@ -9,7 +9,7 @@ import { Templates, TemplateId } from '@/modules/templates/lib/templates'
 
 // Hook interfaces
 export interface UseChatStateProps {
-  projectMessages: ProjectMessage[]
+  projectMessages?: ProjectMessage[]
 }
 
 export interface UseChatSubmissionProps {

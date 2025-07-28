@@ -13,7 +13,6 @@ import { FragmentSchema } from '@/modules/shared/lib/schema'
 import { ExecutionResult } from '@/modules/shared/lib/types'
 import { DeepPartial } from 'ai'
 import { ChevronsRight, LoaderCircle } from 'lucide-react'
-import { Dispatch, SetStateAction } from 'react'
 
 export function Preview({
   apiKey,
@@ -31,7 +30,7 @@ export function Preview({
   teamID?: string
   accessToken?: string
   selectedTab: 'code' | 'fragment'
-  onSelectedTabChange: Dispatch<SetStateAction<'code' | 'fragment'>>
+  onSelectedTabChange: (tab: 'code' | 'fragment') => void
   isChatLoading: boolean
   isPreviewLoading: boolean
   fragment?: DeepPartial<FragmentSchema>
@@ -45,7 +44,7 @@ export function Preview({
   const isLinkAvailable = result?.template !== 'code-interpreter-v1'
 
   return (
-    <div className="absolute md:relative z-10 top-0 left-0 shadow-2xl md:rounded-tl-3xl md:rounded-bl-3xl md:border-l md:border-y bg-popover h-full w-full overflow-auto">
+    <div className="absolute inset-0 z-10 shadow-2xl md:rounded-tl-3xl md:rounded-bl-3xl md:border-l md:border-y bg-popover overflow-auto">
       <Tabs
         value={selectedTab}
         onValueChange={(value) =>

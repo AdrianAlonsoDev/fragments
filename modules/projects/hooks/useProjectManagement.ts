@@ -1,9 +1,9 @@
-import { useCallback, useState } from 'react'
-import { useLocalStorage } from 'usehooks-ts'
+import { useCallback, useEffect } from 'react'
 import { Project } from '@/modules/projects/types/project-types'
 import { TemplateId } from '@/modules/templates/lib/templates'
 import { SandboxManager } from '@/modules/sandbox/lib/sandbox-manager'
-import { UseProjectManagementProps, ProjectCreateData, SupabaseError } from '@/modules/projects/types'
+import { UseProjectManagementProps } from '@/modules/projects/types'
+import { useProjectStore } from '@/modules/projects/store/project-store'
 
 export function useProjectManagement({
   projects,
@@ -11,8 +11,18 @@ export function useProjectManagement({
   deleteProject,
   onStateReset
 }: UseProjectManagementProps) {
-  const [currentProjectId, setCurrentProjectId] = useLocalStorage<string | null>('currentProjectId', null)
-  const [selectedTemplate, setSelectedTemplate] = useState<'auto' | TemplateId>('auto')
+  const { 
+    currentProjectId, 
+    selectedTemplate, 
+    setCurrentProjectId, 
+    setSelectedTemplate,
+    setProjects
+  } = useProjectStore()
+  
+  // Keep projects in sync
+  useEffect(() => {
+    setProjects(projects)
+  }, [projects]) // Remove setProjects to avoid infinite loop
 
   const handleProjectSelect = useCallback((project: Project) => {
     // Clear current state before switching
@@ -23,7 +33,7 @@ export function useProjectManagement({
     setCurrentProjectId(project.id)
     // Update template based on project
     setSelectedTemplate(project.template_id as TemplateId)
-  }, [onStateReset, setCurrentProjectId])
+  }, [onStateReset]) // Remove setCurrentProjectId to avoid issues
 
   const handleProjectCreate = useCallback(async (projectData: Parameters<typeof createProject>[0]) => {
     const { data, error } = await createProject(projectData)
@@ -38,7 +48,7 @@ export function useProjectManagement({
       console.error('Failed to create project:', error)
       throw error // Propagate error to ProjectSelector
     }
-  }, [createProject, setCurrentProjectId, onStateReset])
+  }, [createProject, onStateReset]) // Remove store setters
 
   const handleProjectDelete = useCallback(async (projectId: string) => {
     try {
@@ -84,7 +94,7 @@ export function useProjectManagement({
       console.error('Error in handleProjectDelete:', error)
       throw error
     }
-  }, [currentProjectId, projects, deleteProject, setCurrentProjectId, onStateReset])
+  }, [currentProjectId, projects, deleteProject, onStateReset]) // Remove store setters
 
   return {
     currentProjectId,

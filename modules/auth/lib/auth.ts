@@ -1,8 +1,9 @@
 import { supabase } from '@/infrastructure/supabase/supabase'
-import { ViewType, UserTeam } from '@/modules/auth/types'
+import { UserTeam } from '@/modules/auth/types'
 import { Session } from '@supabase/supabase-js'
 import { usePostHog } from 'posthog-js/react'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
+import { useAuthStore } from '@/modules/auth/store/auth-store'
 
 export async function getUserTeam(
   session: Session,
@@ -27,13 +28,15 @@ export async function getUserTeam(
   }
 }
 
-export function useAuth(
-  setAuthDialog: (value: boolean) => void,
-  setAuthView: (value: ViewType) => void,
-) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [userTeam, setUserTeam] = useState<UserTeam | undefined>(undefined)
-  const [recovery, setRecovery] = useState(false)
+export function useAuth() {
+  const { 
+    session, 
+    userTeam,
+    setSession, 
+    setUserTeam, 
+    setAuthDialog, 
+    setAuthView 
+  } = useAuthStore()
   const posthog = usePostHog()
 
   useEffect(() => {
@@ -65,16 +68,15 @@ export function useAuth(
       setSession(session)
 
       if (_event === 'PASSWORD_RECOVERY') {
-        setRecovery(true)
         setAuthView('update_password')
         setAuthDialog(true)
       }
 
-      if (_event === 'USER_UPDATED' && recovery) {
-        setRecovery(false)
+      if (_event === 'USER_UPDATED') {
+        // Password was updated successfully
       }
 
-      if (_event === 'SIGNED_IN' && !recovery) {
+      if (_event === 'SIGNED_IN') {
         getUserTeam(session as Session).then(setUserTeam)
         setAuthDialog(false)
         if (!session?.user.user_metadata.is_fragments_user) {
@@ -91,14 +93,14 @@ export function useAuth(
 
       if (_event === 'SIGNED_OUT') {
         setAuthView('sign_in')
+        setUserTeam(undefined)
         posthog.capture('sign_out')
         posthog.reset()
-        setRecovery(false)
       }
     })
 
     return () => subscription.unsubscribe()
-  }, [recovery, setAuthDialog, setAuthView, posthog])
+  }, [posthog]) // Remove store setters to avoid infinite loops
 
   return {
     session,

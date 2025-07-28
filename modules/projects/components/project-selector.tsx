@@ -1,6 +1,7 @@
 'use client'
 
 import { Project } from '@/modules/projects/types/project-types'
+import { ProjectCreateData } from '@/modules/projects/types'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
   DropdownMenu,
@@ -25,13 +26,13 @@ import {
 import { Input } from '@/modules/shared/components/ui/input'
 import { Label } from '@/modules/shared/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/modules/shared/components/ui/select'
-import templates from '@/modules/templates/lib/templates'
+import templates, { TemplateId } from '@/modules/templates/lib/templates'
 
 interface ProjectSelectorProps {
   projects: Project[]
   currentProject: Project | null
   onProjectSelect: (project: Project) => void
-  onProjectCreate: (project: { name: string; description?: string; template_id: string; team_id: string }) => Promise<void>
+  onProjectCreate: (project: ProjectCreateData) => Promise<void>
   onProjectDelete?: (projectId: string) => Promise<void>
   teamId: string
 }
@@ -50,7 +51,11 @@ export function ProjectSelector({
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [newProject, setNewProject] = useState({
+  const [newProject, setNewProject] = useState<{
+    name: string
+    description: string
+    template_id: TemplateId
+  }>({
     name: '',
     description: '',
     template_id: 'code-interpreter-v1'

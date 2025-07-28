@@ -21,6 +21,7 @@ export interface UseProjectManagementProps {
 export interface ProjectCreateData {
   name: string
   template_id: TemplateId
+  team_id: string
   visibility?: 'private' | 'public'
   description?: string
 }

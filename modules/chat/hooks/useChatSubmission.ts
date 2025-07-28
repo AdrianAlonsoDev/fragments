@@ -1,10 +1,11 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { experimental_useObject as useObject } from 'ai/react'
 import { usePostHog } from 'posthog-js/react'
 import { fragmentSchema as schema } from '@/modules/shared/lib/schema'
 import { Message, toAISDKMessages, toMessageImage } from '@/modules/chat/types/messages'
 import { LLMModel, LLMModelConfig } from '@/modules/ai/lib/models'
 import { UseChatSubmissionProps, TemplateConfig } from '@/modules/chat/types'
+import { useChatStore } from '@/modules/chat/store/chat-store'
 
 export function useChatSubmission({
   currentProjectId,
@@ -13,33 +14,37 @@ export function useChatSubmission({
   onFragmentGenerated
 }: UseChatSubmissionProps) {
   const posthog = usePostHog()
-  const [isRateLimited, setIsRateLimited] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false)
+  const { setLoadingStates, isPreviewLoading, errorMessage, isRateLimited } = useChatStore()
 
   const { object, submit: aiSubmit, isLoading, stop, error } = useObject({
     api: currentProjectId ? `/api/projects/${currentProjectId}/chat` : '/api/chat',
     schema,
     onError: (error) => {
       console.error('Error submitting request:', error)
-      if (error.message.includes('limit')) {
-        setIsRateLimited(true)
-      }
-      setErrorMessage(error.message)
+      setLoadingStates({
+        isRateLimited: error.message.includes('limit'),
+        errorMessage: error.message,
+        error: error
+      })
     },
     onFinish: async ({ object: fragment, error }) => {
       if (!error && currentProjectId && fragment && onFragmentGenerated) {
-        setIsPreviewLoading(true)
+        setLoadingStates({ isPreviewLoading: true })
         posthog.capture('fragment_generated', {
           template: fragment?.template,
           projectId: currentProjectId
         })
 
         await onFragmentGenerated(fragment)
-        setIsPreviewLoading(false)
+        setLoadingStates({ isPreviewLoading: false })
       }
     },
   })
+
+  // Update loading state only when it changes
+  useEffect(() => {
+    setLoadingStates({ isLoading })
+  }, [isLoading]) // Remove setLoadingStates from deps to avoid infinite loop
 
   // Stop on error
   useEffect(() => {
@@ -115,7 +120,6 @@ export function useChatSubmission({
     // Actions
     submitChat,
     retry,
-    stop,
-    setIsPreviewLoading
+    stop
   }
 }

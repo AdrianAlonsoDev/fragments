@@ -4,6 +4,7 @@ import { ChatInput } from '@/modules/chat/components/chat-input'
 import { ChatPicker } from '@/modules/chat/components/chat-picker'
 import { ChatSettings } from '@/modules/chat/components/chat-settings'
 import { Preview } from '@/modules/sandbox/components/preview'
+import { PreviewCollapsed } from '@/modules/sandbox/components/preview-collapsed'
 import { ProjectSelector } from './project-selector'
 import { Project } from '@/modules/projects/types/project-types'
 import { Message } from '@/modules/chat/types/messages'
@@ -14,7 +15,6 @@ import { Templates, TemplateId } from '@/modules/templates/lib/templates'
 import { Session } from '@supabase/supabase-js'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { DeepPartial } from 'ai'
-import { Dispatch, SetStateAction } from 'react'
 import { ProjectCreateData } from '@/modules/projects/types'
 
 interface ProjectWorkspaceProps {
@@ -36,16 +36,19 @@ interface ProjectWorkspaceProps {
   fragment: DeepPartial<FragmentSchema> | undefined
   result: ExecutionResult | undefined
   currentTab: 'code' | 'fragment'
-  setCurrentTab: Dispatch<SetStateAction<'code' | 'fragment'>>
+  setCurrentTab: (tab: 'code' | 'fragment') => void
   setCurrentPreview: (preview: { fragment: DeepPartial<FragmentSchema> | undefined; result: ExecutionResult | undefined }) => void
+  clearPreview: () => void
   onClearChat: () => void
   onUndo: () => void
+  previewVisible: boolean
+  setPreviewVisible: (visible: boolean) => void
   
   // Chat input
   chatInput: string
-  setChatInput: Dispatch<SetStateAction<string>>
+  setChatInput: (input: string) => void
   files: File[]
-  setFiles: Dispatch<SetStateAction<File[]>>
+  setFiles: (files: File[]) => void
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void
   
   // Chat submission
@@ -83,8 +86,11 @@ export function ProjectWorkspace({
   currentTab,
   setCurrentTab,
   setCurrentPreview,
+  clearPreview,
   onClearChat,
   onUndo,
+  previewVisible,
+  setPreviewVisible,
   chatInput,
   setChatInput,
   files,
@@ -106,8 +112,8 @@ export function ProjectWorkspace({
   currentModel
 }: ProjectWorkspaceProps) {
   return (
-    <div className="grid w-full md:grid-cols-2">
-      <div className={`flex flex-col w-full max-h-full max-w-[800px] mx-auto px-4 overflow-auto ${fragment ? 'col-span-1' : 'col-span-2'}`}>
+    <div className="flex w-full h-screen">
+      <div className="flex flex-col w-full max-h-full max-w-[800px] mx-auto px-4 overflow-auto flex-1">
         <NavBar 
           session={session} 
           showLogin={onShowLogin}
@@ -129,7 +135,7 @@ export function ProjectWorkspace({
           )}
         </NavBar>
         <Chat
-          messages={messages}
+          messages={Array.isArray(messages) ? messages : []}
           isLoading={isLoading}
           setCurrentPreview={setCurrentPreview}
         />
@@ -163,18 +169,35 @@ export function ProjectWorkspace({
           />
         </ChatInput>
       </div>
-      <Preview
-        apiKey={languageModel?.apiKey}
-        teamID={userTeam?.id}
-        accessToken={session?.access_token}
-        selectedTab={currentTab}
-        onSelectedTabChange={setCurrentTab}
-        isChatLoading={isLoading}
-        isPreviewLoading={isPreviewLoading}
-        fragment={fragment}
-        result={result}
-        onClose={() => setCurrentTab('code')}
-      />
+      {fragment && (
+        <div className={`relative h-full transition-all duration-500 ease-in-out ${previewVisible ? 'flex-1' : 'w-12'}`}>
+          {previewVisible ? (
+            <Preview
+              apiKey={languageModel?.apiKey}
+              teamID={userTeam?.id}
+              accessToken={session?.access_token}
+              selectedTab={currentTab}
+              onSelectedTabChange={setCurrentTab}
+              isChatLoading={isLoading}
+              isPreviewLoading={isPreviewLoading}
+              fragment={fragment}
+              result={result}
+              onClose={() => {
+                setCurrentTab('code')
+                setPreviewVisible(false)
+              }}
+            />
+          ) : (
+            <PreviewCollapsed
+              onExpand={() => {
+                setPreviewVisible(true)
+                setCurrentTab('fragment')
+              }}
+              hasFragment={!!fragment}
+            />
+          )}
+        </div>
+      )}
     </div>
   )
 }

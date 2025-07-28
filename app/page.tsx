@@ -3,9 +3,10 @@
 import { useEffect, useState, useRef } from 'react'
 import { useLocalStorage } from 'usehooks-ts'
 import { usePostHog } from 'posthog-js/react'
-import { ViewType } from '@/modules/auth/types'
 import { AuthDialog } from '@/modules/auth/components/auth-dialog'
 import { useAuth } from '@/modules/auth/lib/auth'
+import { useAuthStore } from '@/modules/auth/store/auth-store'
+import { useUIStore } from '@/modules/shared/store/ui-store'
 import { useProject, useProjects } from '@/modules/projects/hooks/useProject'
 import { useChatState } from '@/modules/chat/hooks/useChatState'
 import { useChatSubmission } from '@/modules/chat/hooks/useChatSubmission'
@@ -22,16 +23,11 @@ import { toAISDKMessages } from '@/modules/chat/types/messages'
 export default function ProjectPage() {
   // Basic UI state
   const [mounted, setMounted] = useState(false)
-  const [isAuthDialogOpen, setAuthDialog] = useState(false)
-  const [authView, setAuthView] = useState<ViewType>('sign_in')
   
-  // Chat input state
-  const [chatInput, setChatInput] = useLocalStorage('chat', '')
-  const [files, setFiles] = useState<File[]>([])
-  const [languageModel, setLanguageModel] = useLocalStorage<LLMModelConfig>(
-    'languageModel',
-    { model: 'claude-3-5-sonnet-latest' }
-  )
+  // UI state
+  const { languageModel, setLanguageModel, previewVisible, setPreviewVisible } = useUIStore()
+  
+  // We'll get chat state from useChatState hook which returns the store
   
   const posthog = usePostHog()
   
@@ -41,7 +37,8 @@ export default function ProjectPage() {
   }, [])
   
   // Auth & Projects
-  const { session, userTeam } = useAuth(setAuthDialog, setAuthView)
+  const { session, userTeam } = useAuth()
+  const { isAuthDialogOpen, authView, setAuthDialog } = useAuthStore()
   const { projects, createProject, deleteProject } = useProjects(session)
   
   // Create a mutable ref to hold clearChat
@@ -71,12 +68,15 @@ export default function ProjectPage() {
     session
   )
   
-  const chatState = useChatState({ projectMessages })
   const {
-    messages,
+    messages = [],
     fragment,
     result,
     currentTab,
+    chatInput,
+    setChatInput,
+    files,
+    setFiles,
     setMessages,
     addMessage,
     updateMessage,
@@ -86,7 +86,7 @@ export default function ProjectPage() {
     setCurrentPreview,
     clearPreview,
     setFragment
-  } = chatState
+  } = useChatState({ projectMessages })
   
   // Update ref whenever clearChat changes
   clearChatRef.current = clearChat
@@ -121,6 +121,7 @@ export default function ProjectPage() {
       })
       
       setCurrentTab('fragment')
+      setPreviewVisible(true)
     }
   })
   
@@ -145,33 +146,28 @@ export default function ProjectPage() {
         { type: 'code' as const, text: object.code || '' },
       ]
 
-      // Use a ref to track if we've already added the message
-      setMessages((prevMessages) => {
-        const lastMessage = prevMessages[prevMessages.length - 1]
-        if (!lastMessage || lastMessage.role !== 'assistant') {
-          return [...prevMessages, {
-            role: 'assistant',
-            content,
-            object,
-          }]
-        } else if (lastMessage.role === 'assistant' && lastMessage.object !== object) {
-          const updatedMessages = [...prevMessages]
-          updatedMessages[updatedMessages.length - 1] = {
-            ...lastMessage,
-            content,
-            object,
-          }
-          return updatedMessages
-        }
-        return prevMessages
-      })
+      // Check if we need to add or update the message
+      const lastMessage = messages[messages.length - 1]
+      if (!lastMessage || lastMessage.role !== 'assistant') {
+        addMessage({
+          role: 'assistant',
+          content,
+          object,
+        })
+      } else if (lastMessage.role === 'assistant' && lastMessage.object !== object) {
+        updateMessage({
+          content,
+          object,
+        })
+      }
     }
-  }, [object, setFragment, setMessages])
+  }, [object, messages, addMessage, updateMessage]) // Include dependencies
   
   // Clear preview when project changes
   useEffect(() => {
     clearPreview()
-  }, [currentProjectId, clearPreview])
+    setPreviewVisible(false)
+  }, [currentProjectId]) // Remove clearPreview to avoid infinite loop
   
   // Model filtering
   const filteredModels = modelsList.models.filter((model) => {
@@ -185,9 +181,7 @@ export default function ProjectPage() {
     (model) => model.id === languageModel.model,
   ) || filteredModels[0]
   
-  const currentTemplate = selectedTemplate === 'auto'
-    ? templates
-    : { [selectedTemplate]: templates[selectedTemplate] }
+  const currentTemplate = templates
   
   // Handlers
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -300,8 +294,11 @@ export default function ProjectPage() {
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
         setCurrentPreview={setCurrentPreview}
+        clearPreview={clearPreview}
         onClearChat={clearChat}
         onUndo={undoLastMessage}
+        previewVisible={previewVisible}
+        setPreviewVisible={setPreviewVisible}
         
         // Chat input
         chatInput={chatInput}
@@ -313,7 +310,7 @@ export default function ProjectPage() {
         // Chat submission
         isLoading={isLoading}
         isPreviewLoading={isPreviewLoading}
-        error={error}
+        error={error || null}
         errorMessage={errorMessage}
         isRateLimited={isRateLimited}
         onRetry={handleRetry}

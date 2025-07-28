@@ -1,92 +1,23 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Message } from '@/modules/chat/types/messages'
-import { FragmentSchema } from '@/modules/shared/lib/schema'
-import { ExecutionResult } from '@/modules/shared/lib/types'
-import { DeepPartial } from 'ai'
+import { useEffect } from 'react'
 import { UseChatStateProps } from '@/modules/chat/types'
+import { useChatStore } from '@/modules/chat/store/chat-store'
 
 export function useChatState({ projectMessages }: UseChatStateProps) {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [fragment, setFragment] = useState<DeepPartial<FragmentSchema>>()
-  const [result, setResult] = useState<ExecutionResult>()
-  const [currentTab, setCurrentTab] = useState<'code' | 'fragment'>('code')
+  const chatStore = useChatStore()
 
   // Sync project messages to local state
   useEffect(() => {
-    if (projectMessages.length > 0) {
-      const formattedMessages: Message[] = projectMessages.map(msg => ({
+    if (projectMessages && projectMessages.length > 0) {
+      const formattedMessages = projectMessages.map(msg => ({
         role: msg.role as 'user' | 'assistant',
         content: msg.content
       }))
-      setMessages(formattedMessages)
+      chatStore.setMessages(formattedMessages)
     } else {
-      setMessages([])
+      chatStore.setMessages([])
     }
-  }, [projectMessages])
+  }, [projectMessages]) // Remove chatStore to avoid infinite loop
 
-  const addMessage = useCallback((message: Message): Message[] => {
-    let updatedMessages: Message[] = []
-    setMessages((prevMessages) => {
-      updatedMessages = [...prevMessages, message]
-      return updatedMessages
-    })
-    return updatedMessages
-  }, [])
-
-  const updateMessage = useCallback((message: Partial<Message>, index?: number) => {
-    setMessages((previousMessages) => {
-      const updatedMessages = [...previousMessages]
-      const targetIndex = index ?? previousMessages.length - 1
-      updatedMessages[targetIndex] = {
-        ...previousMessages[targetIndex],
-        ...message,
-      }
-      return updatedMessages
-    })
-  }, [])
-
-  const clearChat = useCallback(() => {
-    setMessages([])
-    setFragment(undefined)
-    setResult(undefined)
-  }, [])
-
-  const undoLastMessage = useCallback(() => {
-    setMessages((prevMessages) => prevMessages.slice(0, -2))
-    setFragment(undefined)
-    setResult(undefined)
-  }, [])
-
-  const setCurrentPreview = useCallback((preview: {
-    fragment: DeepPartial<FragmentSchema> | undefined
-    result: ExecutionResult | undefined
-  }) => {
-    setFragment(preview.fragment)
-    setResult(preview.result)
-  }, [])
-
-  const clearPreview = useCallback(() => {
-    setFragment(undefined)
-    setResult(undefined)
-    setCurrentTab('code')
-  }, [])
-
-  return {
-    // State
-    messages,
-    fragment,
-    result,
-    currentTab,
-    // Actions
-    setMessages,
-    addMessage,
-    updateMessage,
-    clearChat,
-    undoLastMessage,
-    setCurrentTab,
-    setCurrentPreview,
-    clearPreview,
-    setFragment,
-    setResult
-  }
+  // Return all store methods and state
+  return chatStore
 }

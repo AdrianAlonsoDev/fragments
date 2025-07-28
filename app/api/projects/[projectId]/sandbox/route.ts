@@ -2,6 +2,7 @@ import { FragmentSchema } from '@/lib/schema'
 import { ExecutionResultInterpreter, ExecutionResultWeb } from '@/lib/types'
 import { SandboxManager } from '@/lib/sandbox-manager'
 import { supabase } from '@/lib/supabase'
+import { createAuthenticatedClient } from '@/lib/supabase-auth'
 
 export const maxDuration = 60
 
@@ -25,10 +26,21 @@ export async function POST(
   } = await req.json()
 
   console.log('Project sandbox operation:', operation || 'execute', projectId)
+  console.log('Auth details:', { userID, teamID, hasAccessToken: !!accessToken })
+
+  // Create authenticated Supabase client if we have an access token
+  const authClient = accessToken ? createAuthenticatedClient(accessToken) : null
+  console.log('Created auth client:', !!authClient)
+  
+  // Test the authenticated client
+  if (authClient) {
+    const { data: { user }, error } = await authClient.auth.getUser()
+    console.log('Auth client user:', user?.id, 'error:', error)
+  }
 
   // Handle pause/resume operations
   if (operation === 'pause') {
-    await SandboxManager.pauseProject(projectId)
+    await SandboxManager.pauseProject(projectId, authClient || undefined)
     return new Response(JSON.stringify({ success: true }))
   }
 
@@ -41,7 +53,8 @@ export async function POST(
     projectId,
     fragment.template,
     teamID,
-    accessToken
+    accessToken,
+    authClient || undefined
   )
 
   // Install packages if needed
@@ -57,10 +70,17 @@ export async function POST(
   console.log(`Updated file ${fragment.file_path} in ${sbx.sandboxId}`)
 
   // Update last activity
-  await supabase!
-    .from('projects')
-    .update({ last_activity: new Date().toISOString() })
-    .eq('id', projectId)
+  const dbClient = authClient || supabase
+  if (dbClient) {
+    const { error } = await dbClient
+      .from('projects')
+      .update({ last_activity: new Date().toISOString() })
+      .eq('id', projectId)
+    
+    if (error) {
+      console.error('Failed to update last_activity:', error)
+    }
+  }
 
   // Execute code or return URL
   if (fragment.template === 'code-interpreter-v1') {

@@ -55,7 +55,7 @@ export default function ProjectPage() {
   
   const { session, userTeam } = useAuth(setAuthDialog, setAuthView)
   const { projects, createProject, deleteProject } = useProjects(session)
-  const { project, messages: projectMessages, saveMessage } = useProject(currentProjectId, session)
+  const { project, messages: projectMessages, saveMessage, loading: projectLoading } = useProject(currentProjectId, session)
 
   // Sync project messages to local state and load last fragment/result
   useEffect(() => {
@@ -169,6 +169,14 @@ export default function ProjectPage() {
     if (data && !error) {
       setCurrentProjectId(data.id)
       setSelectedTemplate(data.template_id as TemplateId)
+      // Clear any existing state when creating new project
+      setMessages([])
+      setFragment(undefined)
+      setResult(undefined)
+      setCurrentTab('code')
+    } else if (error) {
+      console.error('Failed to create project:', error)
+      throw error // Propagate error to ProjectSelector
     }
   }
 
@@ -181,19 +189,11 @@ export default function ProjectPage() {
         setFragment(undefined)
         setResult(undefined)
         setCurrentTab('code')
-        
-        // Find next project to select
-        const remainingProjects = projects.filter(p => p.id !== projectId)
-        const nextProject = remainingProjects[0]
-        
-        // Set next project or null
-        setCurrentProjectId(nextProject?.id || null)
-        if (nextProject) {
-          setSelectedTemplate(nextProject.template_id as TemplateId)
-        }
+        setCurrentProjectId(null) // Clear immediately
       }
       
-      // Kill the sandbox
+      // Kill the sandbox - Note: This uses the global client since it's client-side
+      // The sandbox will be killed but sandbox_id might not be cleared from DB without auth
       try {
         await SandboxManager.killProject(projectId)
       } catch (sandboxError) {
@@ -206,6 +206,20 @@ export default function ProjectPage() {
       if (error) {
         console.error('Failed to delete project:', error)
         throw error
+      }
+      
+      // After successful deletion, select next project if we deleted current
+      if (currentProjectId === projectId) {
+        const remainingProjects = projects.filter(p => p.id !== projectId)
+        const nextProject = remainingProjects[0]
+        
+        if (nextProject) {
+          // Use setTimeout to avoid race condition
+          setTimeout(() => {
+            setCurrentProjectId(nextProject.id)
+            setSelectedTemplate(nextProject.template_id as TemplateId)
+          }, 100)
+        }
       }
     } catch (error) {
       console.error('Error in handleProjectDelete:', error)
@@ -337,6 +351,10 @@ export default function ProjectPage() {
       {!mounted ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="animate-pulse">Loading...</div>
+        </div>
+      ) : projectLoading && currentProjectId ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-pulse">Loading project...</div>
         </div>
       ) : !currentProjectId ? (
         <div className="grid w-full">

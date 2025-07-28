@@ -10,10 +10,14 @@ export function useProject(projectId: string | null, session: Session | null) {
 
   useEffect(() => {
     if (!projectId || !session) {
+      // Clear state when no project is selected
+      setProject(null)
+      setMessages([])
       setLoading(false)
       return
     }
 
+    setLoading(true)
     // Fetch project details
     const fetchProject = async () => {
       const { data, error } = await supabase!
@@ -24,6 +28,8 @@ export function useProject(projectId: string | null, session: Session | null) {
 
       if (!error && data) {
         setProject(data)
+      } else if (error) {
+        console.error('Failed to fetch project:', error)
       }
     }
 

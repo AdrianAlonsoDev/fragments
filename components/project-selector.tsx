@@ -49,6 +49,7 @@ export function ProjectSelector({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
@@ -64,12 +65,15 @@ export function ProjectSelector({
         ...newProject,
         team_id: teamId
       })
-      setIsCreateOpen(false)
+      // Reset all state before closing
       setNewProject({ name: '', description: '', template_id: 'code-interpreter-v1' })
+      setIsCreating(false)
+      // Force close dialog
+      setIsCreateOpen(false)
     } catch (error) {
       console.error('Failed to create project:', error)
-    } finally {
       setIsCreating(false)
+      // Keep dialog open on error
     }
   }
 
@@ -79,24 +83,29 @@ export function ProjectSelector({
     setIsDeleting(true)
     try {
       await onProjectDelete(projectToDelete.id)
-      setDeleteConfirmOpen(false)
+      // Reset state before closing
       setProjectToDelete(null)
+      setIsDeleting(false)
+      setDeleteConfirmOpen(false)
     } catch (error) {
       console.error('Failed to delete project:', error)
-    } finally {
       setIsDeleting(false)
+      // Keep dialog open on error
     }
   }
 
   const handleDeleteClick = (e: React.MouseEvent, project: Project) => {
     e.stopPropagation()
     setProjectToDelete(project)
-    setDeleteConfirmOpen(true)
+    setDropdownOpen(false)
+    setTimeout(() => {
+      setDeleteConfirmOpen(true)
+    }, 100)
   }
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="min-w-[200px] justify-between">
             <span className="flex items-center gap-2">
@@ -115,7 +124,10 @@ export function ProjectSelector({
             projects.map((project) => (
               <DropdownMenuItem
                 key={project.id}
-                onClick={() => onProjectSelect(project)}
+                onClick={() => {
+                  onProjectSelect(project)
+                  setDropdownOpen(false)
+                }}
                 className="cursor-pointer justify-between group"
               >
                 <span className="flex items-center">
@@ -136,14 +148,28 @@ export function ProjectSelector({
             ))
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setIsCreateOpen(true)} className="cursor-pointer">
+          <DropdownMenuItem onClick={() => {
+            setDropdownOpen(false)
+            setTimeout(() => setIsCreateOpen(true), 100)
+          }} className="cursor-pointer">
             <Plus className="mr-2 h-4 w-4" />
             New Project
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+      <Dialog 
+        open={isCreateOpen} 
+        modal={true}
+        onOpenChange={(open) => {
+          if (!isCreating) {
+            setIsCreateOpen(open)
+            // Reset form when closing
+            if (!open) {
+              setNewProject({ name: '', description: '', template_id: 'code-interpreter-v1' })
+            }
+          }
+        }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create New Project</DialogTitle>
@@ -190,7 +216,7 @@ export function ProjectSelector({
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isCreating}>
               Cancel
             </Button>
             <Button onClick={handleCreate} disabled={!newProject.name.trim() || isCreating}>
@@ -200,7 +226,16 @@ export function ProjectSelector({
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+      <AlertDialog 
+        open={deleteConfirmOpen} 
+        onOpenChange={(open) => {
+          if (!isDeleting) {
+            setDeleteConfirmOpen(open)
+            if (!open) {
+              setProjectToDelete(null)
+            }
+          }
+        }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Project</AlertDialogTitle>

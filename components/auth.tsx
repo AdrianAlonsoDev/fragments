@@ -306,6 +306,7 @@ function SignUpForm({
           )
         }
       }
+      console.log('[DEBUG] Starting signup for:', email)
       const { data, error } = await supabaseClient.auth.signUp({
         email,
         password,
@@ -314,11 +315,13 @@ function SignUpForm({
           data: metadata,
         },
       })
+      console.log('[DEBUG] Signup response:', { data, error })
       if (error) throw error
       if (data.user && !data.session) {
         setMessage('Check your email for the confirmation link.')
       }
     } catch (error: any) {
+      console.error('[DEBUG] Signup error details:', error)
       setError(error.message || 'An unexpected error occurred.')
     } finally {
       setLoading(false)

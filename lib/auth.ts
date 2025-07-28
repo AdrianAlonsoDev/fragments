@@ -14,14 +14,24 @@ type UserTeam = {
 export async function getUserTeam(
   session: Session,
 ): Promise<UserTeam | undefined> {
-  const { data: defaultTeam } = await supabase!
-    .from('users_teams')
-    .select('teams (id, name, tier, email)')
-    .eq('user_id', session?.user.id)
-    .eq('is_default', true)
-    .single()
+  try {
+    const { data: defaultTeam, error } = await supabase!
+      .from('users_teams')
+      .select('teams (id, name, tier, email)')
+      .eq('user_id', session?.user.id)
+      .eq('is_default', true)
+      .single()
 
-  return defaultTeam?.teams as unknown as UserTeam
+    if (error) {
+      console.error('Error fetching user team:', error)
+      return undefined
+    }
+
+    return defaultTeam?.teams as unknown as UserTeam
+  } catch (error) {
+    console.error('Unexpected error fetching user team:', error)
+    return undefined
+  }
 }
 
 export function useAuth(

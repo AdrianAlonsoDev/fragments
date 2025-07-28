@@ -16,6 +16,7 @@ import { ChevronsRight, LoaderCircle } from 'lucide-react'
 import { Dispatch, SetStateAction } from 'react'
 
 export function Preview({
+  apiKey,
   teamID,
   accessToken,
   selectedTab,
@@ -26,8 +27,9 @@ export function Preview({
   result,
   onClose,
 }: {
-  teamID: string | undefined
-  accessToken: string | undefined
+  apiKey?: string
+  teamID?: string
+  accessToken?: string
   selectedTab: 'code' | 'fragment'
   onSelectedTabChange: Dispatch<SetStateAction<'code' | 'fragment'>>
   isChatLoading: boolean

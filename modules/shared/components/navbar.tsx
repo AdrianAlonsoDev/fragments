@@ -141,15 +141,15 @@ export function NavBar({
                 <Logo className="mr-2 h-4 w-4 text-muted-foreground" />
                 About E2B
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSocialClick('github')}>
+              <DropdownMenuItem onClick={() => onSocialClick?.('github')}>
                 <GitHubLogoIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                 Star on GitHub
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSocialClick('discord')}>
+              <DropdownMenuItem onClick={() => onSocialClick?.('discord')}>
                 <DiscordLogoIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                 Join us on Discord
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSocialClick('x')}>
+              <DropdownMenuItem onClick={() => onSocialClick?.('x')}>
                 <TwitterLogoIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                 Follow us on X
               </DropdownMenuItem>
